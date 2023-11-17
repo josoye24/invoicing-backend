@@ -9,16 +9,19 @@ import {
   NotFoundException,
   UsePipes,
   ValidationPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { InvoiceService } from './invoice.service';
 import { InvoiceHead } from './entities/invoice-head.entity';
 import { InvoiceHeadDto } from './dto/invoice-head.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('invoice')
 export class InvoiceController {
   constructor(private readonly invoiceService: InvoiceService) {}
 
   @Post('create')
+  @UseGuards(AuthGuard('jwt'))
   @UsePipes(new ValidationPipe({ transform: true }))
   async createInvoice(
     @Body() invoiceData: InvoiceHeadDto,
@@ -27,13 +30,21 @@ export class InvoiceController {
   }
 
   @Get('all')
+  @UseGuards(AuthGuard('jwt'))
   async getAllInvoices(): Promise<InvoiceHead[]> {
     return this.invoiceService.getAllInvoices();
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard('jwt'))
   async getInvoiceById(@Param('id') id: string): Promise<InvoiceHead> {
     return this.invoiceService.getInvoiceById(id);
+  }
+
+  @Get('user/:id')
+  @UseGuards(AuthGuard('jwt'))
+  async getInvoicesByUserId(@Param('id') id: string): Promise<InvoiceHead[]> {
+    return this.invoiceService.getInvoicesByUserId(id);
   }
 
   @Put(':id')
@@ -50,10 +61,8 @@ export class InvoiceController {
       await this.invoiceService.deleteInvoice(id);
     } catch (error) {
       if (error instanceof NotFoundException) {
-        // Handle 404 response or rethrow the error if needed
         throw new NotFoundException(`Invoice with ID ${id} not found`);
       }
-      // Handle other errors
       throw error;
     }
   }

@@ -1,5 +1,6 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../common/base.entity';
+import { InvoiceHead } from 'src/invoice/entities/invoice-head.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -11,4 +12,7 @@ export class User extends BaseEntity {
 
   @Column()
   password: string;
+
+  @OneToMany(() => InvoiceHead, (invoice) => invoice.user)
+  invoices: InvoiceHead[];
 }

@@ -1,10 +1,9 @@
-import { Injectable, HttpStatus, NotFoundException } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InvoiceHead } from './entities/invoice-head.entity';
 import { InvoiceHeadDto } from './dto/invoice-head.dto';
 import { ResponseHelper } from '../common/response.helper';
-
 import { User } from '../users/entities/user.entity';
 
 @Injectable()
@@ -25,7 +24,10 @@ export class InvoiceService {
     });
 
     if (!isValidUserId) {
-      this.httpRes.SendHttpError('Invalid user id', HttpStatus.BAD_REQUEST);
+      return this.httpRes.SendHttpError(
+        'Invalid user id',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const newInvoiceHead = this.invoiceHeadRepository.create(invoiceData);
@@ -41,22 +43,84 @@ export class InvoiceService {
     newInvoiceHead.invoiceTotal = this.calculateInvoiceTotal(newInvoiceHead);
 
     // create the invoice
-    return this.invoiceHeadRepository.save(newInvoiceHead);
+    await this.invoiceHeadRepository.save(newInvoiceHead);
+
+    return this.httpRes.SendHttpResponse(
+      'Invoice created successfully',
+      HttpStatus.CREATED,
+      newInvoiceHead,
+    );
   }
 
   async getAllInvoices(): Promise<InvoiceHead[]> {
-    return this.invoiceHeadRepository.find({ relations: ['details'] });
+    const invoices = await this.invoiceHeadRepository.find({
+      relations: ['details', 'user'],
+    });
+
+    // map User properties to reduce the amount of data exposed
+    invoices.forEach((invoice) => {
+      if (invoice.user) {
+        invoice.user = {
+          id: invoice.user.id,
+          name: invoice.user.name,
+          email: invoice.user.email,
+        } as User;
+      }
+    });
+    return this.httpRes.SendHttpResponse(
+      'All invoices fetched successfully',
+      HttpStatus.OK,
+      invoices,
+    );
   }
 
   async getInvoiceById(id: string): Promise<InvoiceHead> {
-    // const invoice = await this.invoiceHeadRepository.findOne(id, { relations: ['details'] });
     const invoice = await this.invoiceHeadRepository.findOne({
       where: { id: id },
+      relations: ['details', 'user'],
     });
-    if (!invoice) {
-      throw new NotFoundException(`Invoice with ID ${id} not found`);
+    // User properties to reduce the amount of data exposed
+    if (invoice.user) {
+      invoice.user = {
+        id: invoice.user.id,
+        name: invoice.user.name,
+        email: invoice.user.email,
+      } as User;
     }
-    return invoice;
+
+    if (!invoice) {
+      return this.httpRes.SendHttpError(
+        'Invoice not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return this.httpRes.SendHttpResponse(
+      'Invoice fetched successfully',
+      HttpStatus.OK,
+      invoice,
+    );
+  }
+
+  async getInvoicesByUserId(id: string): Promise<InvoiceHead[]> {
+    const invoice = await this.invoiceHeadRepository.find({
+      where: { user: { id: id } },
+      relations: ['details', 'user'],
+    });
+    // map User properties to reduce the amount of data exposed
+    invoice.forEach((invo) => {
+      if (invo.user) {
+        invo.user = {
+          id: invo.user.id,
+          name: invo.user.name,
+          email: invo.user.email,
+        } as User;
+      }
+    });
+    return this.httpRes.SendHttpResponse(
+      'All invoices fetched successfully',
+      HttpStatus.OK,
+      invoice,
+    );
   }
 
   async updateInvoice(

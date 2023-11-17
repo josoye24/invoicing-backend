@@ -26,13 +26,16 @@ export class AuthService {
     });
 
     if (existingUser) {
-      this.httpRes.SendHttpError('Email already exists', HttpStatus.CONFLICT);
+      return this.httpRes.SendHttpError(
+        'Email already exists',
+        HttpStatus.CONFLICT,
+      );
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // create a new user
-    const user = await this.usersRepository.create({
+    const user = this.usersRepository.create({
       name,
       email,
       password: hashedPassword,
@@ -43,7 +46,7 @@ export class AuthService {
     delete user.id;
     delete user.password;
 
-    this.httpRes.SendHttpResponse(
+    return this.httpRes.SendHttpResponse(
       'User created successfully',
       HttpStatus.OK,
       user,
@@ -59,7 +62,7 @@ export class AuthService {
 
     //  validate email
     if (!user) {
-      this.httpRes.SendHttpError(
+      return this.httpRes.SendHttpError(
         'Invalid email or password',
         HttpStatus.UNAUTHORIZED,
       );
@@ -69,7 +72,7 @@ export class AuthService {
 
     //  validate password
     if (!isPasswordMatched) {
-      this.httpRes.SendHttpError(
+      return this.httpRes.SendHttpError(
         'Invalid email or password',
         HttpStatus.UNAUTHORIZED,
       );
@@ -79,6 +82,10 @@ export class AuthService {
     delete user.password;
     const data = { token, user };
 
-    this.httpRes.SendHttpResponse('Login successfully', HttpStatus.OK, data);
+    return this.httpRes.SendHttpResponse(
+      'Login successfully',
+      HttpStatus.OK,
+      data,
+    );
   }
 }

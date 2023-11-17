@@ -37,15 +37,4 @@ export class UsersService {
       user,
     );
   }
-
-  async isValidUserId(id: string): Promise<boolean> {
-    try {
-      const user = await this.usersRepository.findOne({
-        where: { id: id },
-      });
-      return !!user;
-    } catch (error) {
-      return false;
-    }
-  }
 }

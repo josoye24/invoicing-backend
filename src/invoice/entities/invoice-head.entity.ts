@@ -1,6 +1,6 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { InvoiceDetail } from './invoice-detail.entity';
-// import { User } from '../../users/entities/user.entity';
+import { User } from '../../users/entities/user.entity';
 import { BaseEntity } from '../../common/base.entity';
 
 @Entity()
@@ -20,6 +20,7 @@ export class InvoiceHead extends BaseEntity {
   @OneToMany(() => InvoiceDetail, (detail) => detail.head, { cascade: true })
   details: InvoiceDetail[];
 
-  @Column({ type: 'uuid' })
-  userId: string;
+  @ManyToOne(() => User, (user) => user.invoices)
+  @JoinColumn({ name: 'userId' })
+  user: User;
 }
