@@ -1,53 +1,51 @@
-import { NotFoundException } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { CreateUserDto } from './dto/user.dto';
+import { ResponseHelper } from '../common/response.helper';
 
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private httpRes: ResponseHelper,
   ) {}
 
   async getAllUsers() {
-    const users = this.usersRepository.find();
-    return users;
+    const users = await this.usersRepository.find();
+    return this.httpRes.SendHttpResponse(
+      'All users fetched successfully',
+      HttpStatus.OK,
+      users,
+    );
   }
 
-  async getUserById(id: number) {
+  async getUserById(id: string) {
     const user = await this.usersRepository.findOne({
-      where: {
-        id: id.toString(),
-      },
+      where: { id: id },
     });
     if (user) {
-      return user;
+      return this.httpRes.SendHttpResponse(
+        'User fetched successfully',
+        HttpStatus.OK,
+        user,
+      );
     }
-    throw new NotFoundException('Could not find the user');
+    return this.httpRes.SendHttpError(
+      'Could not find the user',
+      HttpStatus.NOT_FOUND,
+      user,
+    );
   }
 
-  async createUser(createUserDto: CreateUserDto) {
-    const newUser = await this.usersRepository.create(createUserDto);
-    await this.usersRepository.save({
-      name: createUserDto.name,
-      email: createUserDto.email,
-      password: createUserDto.password,
-    });
-    return newUser;
-  }
-
-  async deleteById(id: number) {
-    const user = await this.usersRepository.findOne({
-      where: {
-        id: id.toString(),
-      },
-    });
-    if (!user) {
-      return null;
+  async isValidUserId(id: string): Promise<boolean> {
+    try {
+      const user = await this.usersRepository.findOne({
+        where: { id: id },
+      });
+      return !!user;
+    } catch (error) {
+      return false;
     }
-
-    await this.usersRepository.remove(user);
-    return user;
   }
 }
