@@ -41,6 +41,12 @@ export class InvoiceController {
     return this.invoiceService.getInvoiceById(id);
   }
 
+  @Get('test/:id')
+  @UseGuards(AuthGuard('jwt'))
+  async getInvoiceByInvoiceId(@Param('id') id: string): Promise<InvoiceHead> {
+    return this.invoiceService.getInvoiceByInvoiceId(id);
+  }
+
   @Get('user/:id')
   @UseGuards(AuthGuard('jwt'))
   async getInvoicesByUserId(@Param('id') id: string): Promise<InvoiceHead[]> {

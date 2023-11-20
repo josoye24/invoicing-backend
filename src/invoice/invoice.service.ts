@@ -1,4 +1,4 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InvoiceHead } from './entities/invoice-head.entity';
@@ -18,7 +18,6 @@ export class InvoiceService {
 
   async createInvoice(invoiceData: InvoiceHeadDto): Promise<InvoiceHead> {
     // check user exists
-
     const isValidUserId = await this.usersRepository.findOne({
       where: { id: invoiceData.userId },
     });
@@ -101,10 +100,23 @@ export class InvoiceService {
     );
   }
 
+  async getInvoiceByInvoiceId(id: string): Promise<InvoiceHead> {
+    const invoice = await this.invoiceHeadRepository.findOne({
+      where: { id: id },
+    });
+    if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
+    return invoice;
+  }
+
   async getInvoicesByUserId(id: string): Promise<InvoiceHead[]> {
     const invoice = await this.invoiceHeadRepository.find({
       where: { user: { id: id } },
       relations: ['details', 'user'],
+      order: {
+        createdAt: 'DESC',
+      },
     });
     // map User properties to reduce the amount of data exposed
     invoice.forEach((invo) => {

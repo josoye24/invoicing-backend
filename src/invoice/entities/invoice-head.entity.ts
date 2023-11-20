@@ -1,10 +1,21 @@
-import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
+  Generated,
+} from 'typeorm';
 import { InvoiceDetail } from './invoice-detail.entity';
 import { User } from '../../users/entities/user.entity';
 import { BaseEntity } from '../../common/base.entity';
 
 @Entity()
 export class InvoiceHead extends BaseEntity {
+  @Column()
+  @Generated('increment')
+  invoiceNumber: number;
+
   @Column()
   customerName: string;
 
@@ -16,6 +27,9 @@ export class InvoiceHead extends BaseEntity {
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   invoiceTotal: number;
+
+  @Column({ type: 'uuid' })
+  userId: string;
 
   @OneToMany(() => InvoiceDetail, (detail) => detail.head, { cascade: true })
   details: InvoiceDetail[];
