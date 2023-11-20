@@ -100,16 +100,6 @@ export class InvoiceService {
     );
   }
 
-  async getInvoiceByInvoiceId(id: string): Promise<InvoiceHead> {
-    const invoice = await this.invoiceHeadRepository.findOne({
-      where: { id: id },
-    });
-    if (!invoice) {
-      throw new NotFoundException('Invoice not found');
-    }
-    return invoice;
-  }
-
   async getInvoicesByUserId(id: string): Promise<InvoiceHead[]> {
     const invoice = await this.invoiceHeadRepository.find({
       where: { user: { id: id } },
@@ -166,5 +156,16 @@ export class InvoiceService {
   // method for calculating invoiceTotal
   private calculateInvoiceTotal(invoice: InvoiceHead): number {
     return invoice.productSubtotal;
+  }
+
+  // method only used by Jest test
+  async getInvoiceByInvoiceId(id: string): Promise<InvoiceHead> {
+    const invoice = await this.invoiceHeadRepository.findOne({
+      where: { id: id },
+    });
+    if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
+    return invoice;
   }
 }
